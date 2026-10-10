@@ -74,11 +74,13 @@ export const EditorPane: React.FC<EditorPaneProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
+              if (!markdown.trim()) return;
               if (window.confirm('Clear all markdown content?')) {
                 onChange('');
               }
             }}
-            className="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            disabled={!markdown.trim()}
+            className="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 disabled:opacity-30 disabled:pointer-events-none p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             title="Clear editor"
           >
             <Trash2 className="w-3.5 h-3.5" />

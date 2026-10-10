@@ -230,10 +230,21 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
             )}
 
             {/* Cozy Body Content */}
-            <div
-              className={`pdf-document-body ${getFontFamilyClass()}`}
-              dangerouslySetInnerHTML={{ __html: parsed.html }}
-            />
+            {parsed.html ? (
+              <div
+                className={`pdf-document-body ${getFontFamilyClass()}`}
+                dangerouslySetInnerHTML={{ __html: parsed.html }}
+              />
+            ) : !parsed.frontmatter.title && (
+              <div className="py-24 text-center select-none">
+                <p className="text-sm font-medium text-slate-400 dark:text-slate-500">
+                  Preview is empty
+                </p>
+                <p className="text-xs text-slate-400/80 dark:text-slate-600 mt-1">
+                  Type or paste Markdown into the editor to see your formatted document
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -308,10 +319,17 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
             )}
 
             {/* Markdown Body Content with KaTeX, Booktabs, and TOC */}
-            <div
-              className="pdf-document-body"
-              dangerouslySetInnerHTML={{ __html: parsed.html }}
-            />
+            {parsed.html ? (
+              <div
+                className="pdf-document-body"
+                dangerouslySetInnerHTML={{ __html: parsed.html }}
+              />
+            ) : !parsed.frontmatter.title && (
+              <div className="py-24 text-center select-none no-print">
+                <p className="text-sm font-medium text-slate-400">Preview paper sheet</p>
+                <p className="text-xs text-slate-400/80 mt-1">Type or paste Markdown into the editor to preview your PDF</p>
+              </div>
+            )}
 
             {/* Simulated LaTeX Footer with Page Number */}
             <div className="mt-16 pt-4 border-t border-[#e2e8f0] text-center text-xs text-[#64748b] font-mono no-print">

@@ -11,57 +11,13 @@ import { PreviewPane } from './components/PreviewPane';
 import { DownloadProgressModal } from './components/DownloadProgressModal';
 import { PandocConfig, DEFAULT_PANDOC_CONFIG } from './types/pandoc';
 import { parseMarkdownWithLaTeX } from './utils/markdownParser';
-import { exportElementToPdf, printVectorPdf } from './utils/pdfExport';
+import { exportElementToPdf } from './utils/pdfExport';
 import { Eye, Edit3, SlidersHorizontal } from 'lucide-react';
-
-const INITIAL_MARKDOWN = `---
-title: "Technical Report: High-Speed Signal Processing"
-author: "Tasnimul Hasan"
-date: "October 2026"
-abstract: "This report examines small-signal frequency response and high-amplitude slew rate constraints in closed-loop operational amplifier circuits."
----
-
-# Frequency Response and Slew Rate
-
-The full-power bandwidth of an operational amplifier is bounded by its internal compensation capacitor charging current:
-
-$$SR = 2\\pi f V_m$$
-
-## Maximum Undistorted Output Amplitude
-
-**Given Parameters:**
-- Signal frequency: $f = 105\\text{ kHz} = 105 \\times 10^3\\text{ Hz}$
-- Measured slew rate: $SR = 0.96\\text{ V}/\\mu\\text{s} = 0.96 \\times 10^6\\text{ V/s}$
-
-Condition for distortion-free output swing:
-
-$$V_{m,\\max} = \\frac{SR}{2\\pi f} = \\frac{0.96 \\times 10^6}{2\\pi \\times (105 \\times 10^3)} \\approx 1.4551\\text{ V}$$
-
-$$\\mathbf{V}_{\\mathbf{m},\\max} \\approx 1.455\\text{ V}$$
-
-The closed-loop cut-off frequency accounting for parasitic reactance:
-
-$$f_{\\text{3dB}} = \\frac{1}{2\\pi \\sqrt{R_1^2 + (\\omega L_1)^2}} = \\frac{1}{\\sqrt{1 + (f / f_0)^2}}$$
-
-## Performance Benchmark
-
-Table 1 summarizes measured laboratory outcomes:
-
-| Amplifier Stage | Slew Rate (V/μs) | Bandwidth (kHz) | Distortion (THD) |
-| :--- | :--- | :--- | :--- |
-| Precision Stage A | 0.96 | 105 | < 0.02% |
-| High-Speed Stage B| 4.50 | 480 | < 0.05% |
-| Buffer Stage C   | 12.80 | 1,200 | < 0.01% |
-
-## Summary
-
-Careful matching of slew rate and feedback resistance guarantees distortion-free transmission across the operational passband.
-`;
 
 export default function App() {
   const [config, setConfig] = useState<PandocConfig>(DEFAULT_PANDOC_CONFIG);
-  const [markdown, setMarkdown] = useState<string>(INITIAL_MARKDOWN);
-  const [mobileView, setMobileView] = useState<'editor' | 'preview'>('preview');
+  const [markdown, setMarkdown] = useState<string>('');
+  const [mobileView, setMobileView] = useState<'editor' | 'preview'>('editor');
   const [isMobileSettingsOpen, setIsMobileSettingsOpen] = useState<boolean>(false);
 
   // Responsive desktop detection (>= 768px)
@@ -153,10 +109,6 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [exportError]);
 
-  const handlePrintVectorPdf = () => {
-    printVectorPdf();
-  };
-
   const handleExportPdf = async () => {
     if (isExporting) return;
 
@@ -164,7 +116,7 @@ export default function App() {
       setIsExporting(true);
       setExportError(null);
       setExportProgress(10);
-      setExportStatusText('Preparing crystal-clear publication layout...');
+      setExportStatusText('Preparing publication document...');
 
       // Yield immediately so the modal paints onto the screen before heavy work begins
       await new Promise((resolve) => setTimeout(resolve, 60));
@@ -179,15 +131,14 @@ export default function App() {
 
       await exportElementToPdf(sheetRef.current, filename, config, (progress) => {
         setExportProgress(progress);
-        if (progress < 30) setExportStatusText('Preparing document typography...');
-        else if (progress < 50) setExportStatusText('Extracting selectable text & math coordinates...');
-        else if (progress < 75) setExportStatusText('Rendering ultra-crisp lossless HD canvas...');
-        else if (progress < 90) setExportStatusText('Embedding searchable text stream & pages...');
-        else setExportStatusText('Compiling crystal-clear PDF download stream...');
+        if (progress < 30) setExportStatusText('Loading document typography...');
+        else if (progress < 60) setExportStatusText('Rasterizing math formulas & vector equations...');
+        else if (progress < 85) setExportStatusText('Slicing pages to standard A4 format...');
+        else setExportStatusText('Compiling PDF download stream...');
       });
 
       setExportProgress(100);
-      setExportStatusText('Crystal-Clear PDF ready and downloaded!');
+      setExportStatusText('Download complete!');
       setTimeout(() => {
         setIsExporting(false);
         setExportProgress(0);
@@ -210,7 +161,6 @@ export default function App() {
       {/* Top Header with "From Hassan With Love" Centered */}
       <Header
         onExportPdf={handleExportPdf}
-        onPrintPdf={handlePrintVectorPdf}
         isExporting={isExporting}
         exportProgress={exportProgress}
       />
@@ -315,7 +265,6 @@ export default function App() {
         statusText={exportStatusText}
         error={exportError}
         onDismissError={() => setExportError(null)}
-        onPrintVectorPdf={handlePrintVectorPdf}
       />
     </div>
   );
