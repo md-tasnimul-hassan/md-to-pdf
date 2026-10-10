@@ -132,26 +132,60 @@ export function parseMarkdownWithLaTeX(
     return `<p class="mb-3 leading-relaxed text-[#0f172a]">${text}</p>`;
   };
 
-  // LaTeX Booktabs-style table rendering
-  renderer.table = function ({ header, rows }) {
+  // LaTeX Booktabs-style table rendering (Compatible with Marked v12+ tokens)
+  renderer.table = function (token: any) {
+    let headerCells = '';
+    if (token.header && Array.isArray(token.header)) {
+      for (let i = 0; i < token.header.length; i++) {
+        headerCells += this.tablecell(token.header[i]);
+      }
+    }
+    const headerRow = this.tablerow({ text: headerCells });
+
+    let bodyRows = '';
+    if (token.rows && Array.isArray(token.rows)) {
+      for (let r = 0; r < token.rows.length; r++) {
+        const row = token.rows[r];
+        let rowCells = '';
+        if (Array.isArray(row)) {
+          for (let c = 0; c < row.length; c++) {
+            rowCells += this.tablecell(row[c]);
+          }
+        }
+        bodyRows += this.tablerow({ text: rowCells });
+      }
+    }
+
     return `<div class="my-5 overflow-x-auto">
       <table class="w-full text-left border-collapse text-sm">
         <thead class="border-t-2 border-b border-[#0f172a] font-semibold text-[#0f172a]">
-          ${header}
+          ${headerRow}
         </thead>
         <tbody class="border-b-2 border-[#0f172a] divide-y divide-[#e2e8f0] text-[#0f172a]">
-          ${rows}
+          ${bodyRows}
         </tbody>
       </table>
     </div>`;
   };
 
+  renderer.tablerow = function (token: any) {
+    const content = token.text || '';
+    return `<tr>${content}</tr>`;
+  };
+
   renderer.tablecell = function (token: any) {
     const isHeader = !!token.header;
     const tag = isHeader ? 'th' : 'td';
-    const align = token.align ? `text-${token.align}` : 'text-left';
+    const align =
+      token.align === 'center'
+        ? 'text-center'
+        : token.align === 'right'
+        ? 'text-right'
+        : 'text-left';
     const padding = isHeader ? 'py-2 px-3 font-semibold' : 'py-1.5 px-3';
-    const content = token.tokens ? this.parser.parseInline(token.tokens) : (token.text || '');
+    const content = token.tokens
+      ? this.parser.parseInline(token.tokens)
+      : token.text || '';
     return `<${tag} class="${align} ${padding}">${content}</${tag}>`;
   };
 
