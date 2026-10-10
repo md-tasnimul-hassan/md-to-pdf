@@ -1,0 +1,8 @@
+{
+  "name": "Pandoc Markdown to PDF Converter",
+  "description": "Convert Markdown to publication-ready PDF using Pandoc LaTeX styles, Arev typography, 1-inch margins, live preview, and one-click GitHub/Cloudflare Pages deployment.",
+  "requestFramePermissions": [
+    "downloads"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

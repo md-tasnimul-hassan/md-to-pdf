@@ -1,0 +1,33 @@
+name: Compile Markdown to PDF (Pandoc pdflatex arev)
+
+on:
+  push:
+    paths:
+      - '**.md'
+  workflow_dispatch:
+
+jobs:
+  build-pdf:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Pandoc pdflatex in Docker (Pre-bundled TeX Live & Arev)
+        run: |
+          mkdir -p output
+          docker run --rm \
+            -v "${{ github.workspace }}:/data" \
+            -w /data \
+            pandoc/extra:latest \
+            file.md -o output/file.pdf \
+            --pdf-engine=pdflatex \
+            -V geometry:margin=1in \
+            -V fontfamily=arev \
+            -V fontsize=11pt
+
+      - name: Upload Generated PDF as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-pdf
+          path: output/file.pdf
