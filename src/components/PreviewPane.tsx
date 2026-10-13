@@ -330,11 +330,6 @@ export const PreviewPane: React.FC<PreviewPaneProps> = ({
                 <p className="text-xs text-slate-400/80 mt-1">Type or paste Markdown into the editor to preview your PDF</p>
               </div>
             )}
-
-            {/* Simulated LaTeX Footer with Page Number */}
-            <div className="mt-16 pt-4 border-t border-[#e2e8f0] text-center text-xs text-[#64748b] font-mono no-print">
-              - 1 -
-            </div>
           </div>
         </div>
 

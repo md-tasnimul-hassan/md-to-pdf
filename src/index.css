@@ -70,88 +70,99 @@
 }
 
 .pdf-document-body h1 {
-  font-size: 1.45em;
+  font-size: 1.35em;
   font-weight: 700;
-  margin-top: 1.6em;
-  margin-bottom: 0.6em;
+  margin-top: 0.9em;
+  margin-bottom: 0.35em;
   color: #0f172a !important;
   border-bottom: 1.5px solid #0f172a !important;
-  padding-bottom: 0.25em;
+  padding-bottom: 0.15em;
   line-height: 1.25;
 }
 
 .pdf-document-body h2 {
-  font-size: 1.2em;
+  font-size: 1.15em;
   font-weight: 700;
-  margin-top: 1.3em;
-  margin-bottom: 0.4em;
+  margin-top: 0.8em;
+  margin-bottom: 0.3em;
+  color: #0f172a !important;
+  line-height: 1.25;
+}
+
+.pdf-document-body h3 {
+  font-size: 1.02em;
+  font-weight: 600;
+  margin-top: 0.65em;
+  margin-bottom: 0.25em;
   color: #0f172a !important;
   line-height: 1.3;
 }
 
-.pdf-document-body h3 {
-  font-size: 1.05em;
-  font-weight: 600;
-  margin-top: 1.1em;
-  margin-bottom: 0.3em;
-  color: #0f172a !important;
-  line-height: 1.35;
-}
-
 .pdf-document-body p {
   margin-top: 0;
-  margin-bottom: 0.9em;
-  line-height: 1.45;
+  margin-bottom: 0.45em;
+  line-height: 1.42;
   color: #1e293b !important;
 }
 
 .pdf-document-body ul, .pdf-document-body ol {
-  margin-top: 0.3em;
-  margin-bottom: 0.8em;
-  padding-left: 1.5em;
+  margin-top: 0.2em;
+  margin-bottom: 0.45em;
+  padding-left: 1.4em;
   color: #1e293b !important;
 }
 
 .pdf-document-body li {
-  margin-bottom: 0.25em;
+  margin-bottom: 0.15em;
+  line-height: 1.38;
 }
 
 .pdf-document-body blockquote {
-  margin: 1em 0;
-  padding-left: 1em;
+  margin: 0.6em 0;
+  padding-left: 0.8em;
   border-left: 2.5px solid #64748b !important;
   color: #334155 !important;
   font-style: italic;
 }
 
+.pdf-document-body .table-container,
+.pdf-document-body div:has(> table) {
+  overflow: visible !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  width: 100% !important;
+}
+
 .pdf-document-body table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1.2em 0;
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: auto !important;
+  border-collapse: collapse !important;
+  margin: 0.6em 0;
   color: #1e293b !important;
 }
 
 .pdf-document-body table thead {
-  border-top: 2px solid #0f172a !important;
+  border-top: 1.5px solid #0f172a !important;
   border-bottom: 1px solid #0f172a !important;
   color: #0f172a !important;
   font-weight: 600;
 }
 
 .pdf-document-body table tbody {
-  border-bottom: 2px solid #0f172a !important;
+  border-bottom: 1.5px solid #0f172a !important;
 }
 
 .pdf-document-body table th,
 .pdf-document-body table td {
-  padding: 0.45em 0.75em;
+  padding: 0.3em 0.6em;
 }
 
 .pdf-document-body code {
   font-family: 'JetBrains Mono', monospace;
   background-color: #f1f5f9 !important;
   color: #0f172a !important;
-  padding: 0.15em 0.3em;
+  padding: 0.12em 0.28em;
   border-radius: 3px;
   font-size: 0.88em;
 }
@@ -160,8 +171,8 @@
   background-color: #f8fafc !important;
   border: 1px solid #cbd5e1 !important;
   border-radius: 4px;
-  padding: 0.75em 1em;
-  margin: 1em 0;
+  padding: 0.6em 0.8em;
+  margin: 0.6em 0;
   overflow-x: auto;
 }
 
@@ -170,8 +181,9 @@
   padding: 0;
 }
 
+/* KaTeX Equations: Generous, crisp, publication-grade math rendering */
 .pdf-document-body .katex-display-container {
-  margin: 1.25em 0;
+  margin: 0.55em 0;
   text-align: center;
   overflow-x: auto;
   overflow-y: hidden !important;
@@ -185,29 +197,55 @@
   height: 0 !important;
 }
 
-/* KaTeX Clean Equation Rendering - Fix square root cutting powers and eliminate vertical lines */
+.pdf-document-body .katex-display {
+  margin: 0.2em 0 !important;
+}
+
+.pdf-document-body .katex-display > .katex {
+  font-size: 1.18em !important;
+  line-height: 1.25;
+}
+
 .pdf-document-body .katex {
   color: #0f172a !important;
-  font-size: 1.05em;
-  font-family: KaTeX_Main, 'Times New Roman', serif !important;
-  line-height: normal !important;
   text-indent: 0;
   text-rendering: auto;
 }
 
-.pdf-document-body .katex,
-.pdf-document-body .katex * {
-  line-height: normal !important;
-  box-sizing: content-box;
+/* Ensure combination formulas (binomial coefficients) have large, legible, beautiful delimiters and numbers */
+.pdf-document-body .katex .delimsizing.size1 {
+  font-size: 0.9em !important;
+}
+.pdf-document-body .katex .delimsizing.size2 {
+  font-size: 1.1em !important;
+}
+.pdf-document-body .katex .delimsizing.size3 {
+  font-size: 1.28em !important;
+}
+.pdf-document-body .katex .delimsizing.size4 {
+  font-size: 1.48em !important;
 }
 
-.pdf-document-body .katex .mathnormal {
-  font-family: KaTeX_Math, 'Times New Roman', serif !important;
-  font-style: italic !important;
+/* Ensure numbers in binomials and fractions are clear and legible */
+.pdf-document-body .katex .vlist-t .vlist-r .vlist .mord {
+  font-size: inherit;
 }
 
-.pdf-document-body .katex .mord.mtight {
-  font-family: KaTeX_Main, 'Times New Roman', serif !important;
+/* Prevent sub-equations and subscripts from collapsing into microscopic dots */
+.pdf-document-body .katex .size1 {
+  font-size: 0.72em !important;
+}
+.pdf-document-body .katex .size2 {
+  font-size: 0.82em !important;
+}
+.pdf-document-body .katex .size3 {
+  font-size: 0.92em !important;
+}
+
+/* Inline math with combinations or fractions: give comfortable vertical balance */
+.pdf-document-body .katex:not(.katex-display .katex) {
+  font-size: 1.02em;
+  vertical-align: -0.08em;
 }
 
 /* Ensure MathML accessibility layer never renders visually or creates phantom bars */
@@ -259,24 +297,6 @@
   border-left: none !important;
   border-right: none !important;
   border-top: none !important;
-}
-
-/* Display equation container: smooth horizontal scroll with zero vertical scrollbars or lines */
-.pdf-document-body .katex-display-container,
-.katex-display-container {
-  margin: 1.25em 0;
-  text-align: center;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
-}
-
-.pdf-document-body .katex-display-container::-webkit-scrollbar,
-.katex-display-container::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
 }
 
 /* Square root radical fix: lift vinculum above superscripts/powers to eliminate cutting through */
@@ -331,7 +351,34 @@
   break-inside: avoid;
 }
 
-/* Adaptive scrollbar */
+/* Absolute suppression of all scrollbars on print/document sheets and virtual pages */
+#pandoc-printable-sheet,
+#pandoc-printable-sheet *,
+.pdf-document-body,
+.pdf-document-body *,
+.virtual-pdf-page,
+.virtual-pdf-page *,
+#virtual-pdf-staging,
+#virtual-pdf-staging * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+#pandoc-printable-sheet::-webkit-scrollbar,
+#pandoc-printable-sheet *::-webkit-scrollbar,
+.pdf-document-body::-webkit-scrollbar,
+.pdf-document-body *::-webkit-scrollbar,
+.virtual-pdf-page::-webkit-scrollbar,
+.virtual-pdf-page *::-webkit-scrollbar,
+#virtual-pdf-staging::-webkit-scrollbar,
+#virtual-pdf-staging *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+/* Adaptive scrollbar for editor & UI panels */
 ::-webkit-scrollbar {
   width: 7px;
   height: 7px;
@@ -427,11 +474,21 @@
   h1, h2, h3, h4, h5, h6 {
     break-after: avoid !important;
     page-break-after: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .page-break-before {
+    break-before: page !important;
+    page-break-before: always !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
   }
 
   @page {
     size: auto;
-    margin: 0;
+    margin: 1in;
   }
 }
 

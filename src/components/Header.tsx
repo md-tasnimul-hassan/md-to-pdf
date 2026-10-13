@@ -1,6 +1,7 @@
 import React from 'react';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, Printer } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
+import { printVectorPdf } from '../utils/pdfExport';
 
 interface HeaderProps {
   onExportPdf: () => void;
@@ -23,8 +24,19 @@ export const Header: React.FC<HeaderProps> = ({ onExportPdf, isExporting, export
         </h1>
       </div>
 
-      {/* Right: Download PDF Action */}
-      <div className="flex items-center shrink-0 z-10">
+      {/* Right: Actions */}
+      <div className="flex items-center gap-2 shrink-0 z-10">
+        {/* Native Vector Print Button */}
+        <button
+          onClick={printVectorPdf}
+          className="hidden sm:inline-flex items-center justify-center gap-1.5 px-3 h-8.5 sm:h-9 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-all shadow-2xs shrink-0 cursor-pointer"
+          title="Print or Save as Vector PDF (Native Browser Dialog)"
+        >
+          <Printer className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+          <span>Vector Print</span>
+        </button>
+
+        {/* Download PDF Action */}
         <button
           onClick={onExportPdf}
           disabled={isExporting}
