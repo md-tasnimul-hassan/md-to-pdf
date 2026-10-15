@@ -22,7 +22,7 @@ export interface PandocConfig {
 
 export const DEFAULT_PANDOC_CONFIG: PandocConfig = {
   engine: 'pdflatex',
-  fontfamily: 'arev', // Default Arev Sans / Bitstream Vera Sans
+  fontfamily: 'baskerville', // Default Arev Sans / Bitstream Vera Sans
   fontsize: '11pt',
   margin: '0.75in', // Default 0.75 inch
   papersize: 'a4',   // Default A4
