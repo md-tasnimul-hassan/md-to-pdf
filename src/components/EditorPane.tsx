@@ -1,14 +1,18 @@
 import React, { useRef } from 'react';
-import { Upload, Trash2, Heading1, Heading2, Bold, Italic, Code, Sigma, List, Table as TableIcon } from 'lucide-react';
+import { Upload, Trash2, Heading1, Heading2, Bold, Italic, Code, Sigma, List, Table as TableIcon, Copy, Check } from 'lucide-react';
 
 interface EditorPaneProps {
   markdown: string;
   onChange: (value: string) => void;
+  onCopyOneNote?: () => void;
+  isOneNoteCopied?: boolean;
 }
 
 export const EditorPane: React.FC<EditorPaneProps> = ({
   markdown,
   onChange,
+  onCopyOneNote,
+  isOneNoteCopied = false,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -51,8 +55,8 @@ export const EditorPane: React.FC<EditorPaneProps> = ({
 
   return (
     <div className="flex flex-col h-full w-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-colors">
-      {/* Sub-header with Import & Clear */}
-      <div className="flex items-center justify-between px-3 sm:px-4 py-2 bg-slate-50 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 text-xs shrink-0">
+      {/* Sub-header with Import, Copy for OneNote & Clear */}
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2 bg-slate-50 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 text-xs shrink-0 gap-2">
         <div className="flex items-center gap-2">
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -69,6 +73,32 @@ export const EditorPane: React.FC<EditorPaneProps> = ({
             onChange={handleFileUpload}
             className="hidden"
           />
+
+          {/* Copy for OneNote Button */}
+          {onCopyOneNote && (
+            <button
+              onClick={onCopyOneNote}
+              disabled={!markdown.trim()}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all shadow-2xs font-medium cursor-pointer text-xs disabled:opacity-40 disabled:pointer-events-none ${
+                isOneNoteCopied
+                  ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300'
+                  : 'bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/50 dark:hover:bg-purple-900/60 border-purple-200 dark:border-purple-800/80 text-purple-700 dark:text-purple-300'
+              }`}
+              title="Copy formatted Markdown with native formulas and tables for OneNote"
+            >
+              {isOneNoteCopied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Copied for OneNote!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                  <span>Copy for OneNote</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

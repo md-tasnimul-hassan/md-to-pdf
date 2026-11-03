@@ -12,7 +12,8 @@ import { DownloadProgressModal } from './components/DownloadProgressModal';
 import { PandocConfig, DEFAULT_PANDOC_CONFIG } from './types/pandoc';
 import { parseMarkdownWithLaTeX } from './utils/markdownParser';
 import { exportElementToPdf } from './utils/pdfExport';
-import { Eye, Edit3, SlidersHorizontal } from 'lucide-react';
+import { copyToOneNoteClipboard } from './utils/oneNoteExport';
+import { Eye, Edit3, SlidersHorizontal, Check } from 'lucide-react';
 
 export default function App() {
   const [config, setConfig] = useState<PandocConfig>(DEFAULT_PANDOC_CONFIG);
@@ -156,13 +157,40 @@ export default function App() {
     }
   };
 
+  // OneNote formatted copy handling
+  const [isOneNoteCopied, setIsOneNoteCopied] = useState<boolean>(false);
+  const [oneNoteToast, setOneNoteToast] = useState<string | null>(null);
+
+  const handleCopyOneNote = async () => {
+    if (!markdown.trim()) return;
+    try {
+      const ok = await copyToOneNoteClipboard(markdown);
+      if (ok) {
+        setIsOneNoteCopied(true);
+        setOneNoteToast('Copied for OneNote! Paste (Ctrl+V) directly into OneNote.');
+        setTimeout(() => setIsOneNoteCopied(false), 2500);
+        setTimeout(() => setOneNoteToast(null), 4000);
+      } else {
+        setOneNoteToast('Could not copy to clipboard.');
+        setTimeout(() => setOneNoteToast(null), 3000);
+      }
+    } catch (err) {
+      console.error('OneNote copy error:', err);
+      setOneNoteToast('Could not copy to clipboard.');
+      setTimeout(() => setOneNoteToast(null), 3000);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
-      {/* Top Header with "From Hassan With Love" Centered */}
+      {/* Top Header with OneNote Copy, Print, and PDF actions */}
       <Header
         onExportPdf={handleExportPdf}
         isExporting={isExporting}
         exportProgress={exportProgress}
+        onCopyOneNote={handleCopyOneNote}
+        isOneNoteCopied={isOneNoteCopied}
+        hasMarkdown={Boolean(markdown.trim())}
       />
 
       {/* Main Single-Page Workspace */}
@@ -230,6 +258,8 @@ export default function App() {
             <EditorPane
               markdown={markdown}
               onChange={setMarkdown}
+              onCopyOneNote={handleCopyOneNote}
+              isOneNoteCopied={isOneNoteCopied}
             />
           </div>
 
@@ -266,6 +296,14 @@ export default function App() {
         error={exportError}
         onDismissError={() => setExportError(null)}
       />
+
+      {/* OneNote Copy Notification Toast */}
+      {oneNoteToast && (
+        <div className="no-print fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-4 py-2.5 bg-slate-900/95 dark:bg-slate-100/95 text-white dark:text-slate-900 text-xs font-medium rounded-2xl shadow-2xl backdrop-blur-md border border-slate-700/60 dark:border-slate-300/60 pointer-events-none transition-all">
+          <Check className="w-4 h-4 text-emerald-400 dark:text-emerald-600 shrink-0" />
+          <span>{oneNoteToast}</span>
+        </div>
+      )}
     </div>
   );
 }
