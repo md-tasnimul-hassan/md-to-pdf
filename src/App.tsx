@@ -1,0 +1,332 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
+import { Header } from './components/Header';
+import { PandocConfigBar } from './components/PandocConfigBar';
+import { EditorPane } from './components/EditorPane';
+import { PreviewPane } from './components/PreviewPane';
+import { DownloadProgressModal } from './components/DownloadProgressModal';
+import { PandocConfig, DEFAULT_PANDOC_CONFIG } from './types/pandoc';
+import { parseMarkdownWithLaTeX } from './utils/markdownParser';
+import { exportElementToPdf } from './utils/pdfExport';
+import { copyToOneNoteClipboard } from './utils/oneNoteExport';
+import { findMarkdownRangeForSelectedText } from './utils/textSync';
+import { Eye, Edit3, SlidersHorizontal, Check } from 'lucide-react';
+
+export default function App() {
+  const [config, setConfig] = useState<PandocConfig>(DEFAULT_PANDOC_CONFIG);
+  const [markdown, setMarkdown] = useState<string>('');
+  const [mobileView, setMobileView] = useState<'editor' | 'preview'>('editor');
+  const [isMobileSettingsOpen, setIsMobileSettingsOpen] = useState<boolean>(false);
+  const [highlightRange, setHighlightRange] = useState<{ start: number; end: number; timestamp: number } | null>(null);
+
+  // Synchronize text highlighted in preview with the editor
+  const handleTextSelectedInPreview = useCallback(
+    (info: { text: string; blockText?: string; latex?: string }) => {
+      if (!markdown) return;
+      const match = findMarkdownRangeForSelectedText(markdown, info.text, {
+        blockText: info.blockText,
+        latex: info.latex,
+      });
+      if (match) {
+        setHighlightRange({
+          start: match.start,
+          end: match.end,
+          timestamp: Date.now(),
+        });
+      }
+    },
+    [markdown]
+  );
+
+  // Responsive desktop detection (>= 768px)
+  const [isDesktop, setIsDesktop] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.innerWidth >= 768 : true
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Split ratio (default 50/50)
+  const [splitRatio, setSplitRatio] = useState<number>(50);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [exportProgress, setExportProgress] = useState<number>(0);
+  const [exportStatusText, setExportStatusText] = useState<string>('');
+
+  const sheetRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Parse markdown whenever text, section numbering, or TOC flag changes
+  const parsed = useMemo(() => {
+    return parseMarkdownWithLaTeX(markdown, {
+      numberSections: config.numberSections,
+      tableOfContents: config.tableOfContents,
+    });
+  }, [markdown, config.numberSections, config.tableOfContents]);
+
+  const handleConfigChange = (updated: Partial<PandocConfig>) => {
+    setConfig((prev) => ({ ...prev, ...updated }));
+  };
+
+  const handleResetToDefaults = () => {
+    setConfig(DEFAULT_PANDOC_CONFIG);
+  };
+
+  // Draggable Split Divider handling
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const relativeX = e.clientX - rect.left;
+      const percentage = (relativeX / rect.width) * 100;
+      setSplitRatio(Math.min(80, Math.max(20, Math.round(percentage))));
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    } else {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isDragging]);
+
+  // High-fidelity standard PDF Download
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  // Auto-dismiss export error toast after 6 seconds
+  useEffect(() => {
+    if (!exportError) return;
+    const timer = setTimeout(() => {
+      setExportError(null);
+    }, 6000);
+    return () => clearTimeout(timer);
+  }, [exportError]);
+
+  const handleExportPdf = async () => {
+    if (isExporting) return;
+
+    try {
+      setIsExporting(true);
+      setExportError(null);
+      setExportProgress(10);
+      setExportStatusText('Preparing publication document...');
+
+      // Yield immediately so the modal paints onto the screen before heavy work begins
+      await new Promise((resolve) => setTimeout(resolve, 60));
+
+      if (!sheetRef.current) {
+        throw new Error('Preview sheet is not ready yet. Please wait a moment.');
+      }
+
+      const filename = parsed.frontmatter.title
+        ? `${parsed.frontmatter.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.pdf`
+        : 'document.pdf';
+
+      await exportElementToPdf(sheetRef.current, filename, config, (progress) => {
+        setExportProgress(progress);
+        if (progress < 30) setExportStatusText('Loading document typography...');
+        else if (progress < 60) setExportStatusText('Rasterizing math formulas & vector equations...');
+        else if (progress < 85) setExportStatusText('Slicing pages to standard A4 format...');
+        else setExportStatusText('Compiling PDF download stream...');
+      });
+
+      setExportProgress(100);
+      setExportStatusText('Download complete!');
+      setTimeout(() => {
+        setIsExporting(false);
+        setExportProgress(0);
+        setExportStatusText('');
+      }, 1200);
+    } catch (err: any) {
+      console.error('PDF generation error:', err);
+      const rawMsg = String(err?.message || err || '');
+      if (rawMsg.includes('oklab') || rawMsg.includes('color function')) {
+        setExportError('Could not process canvas colors. Re-try or print to save PDF.');
+      } else {
+        setExportError(err?.message || 'Could not generate PDF. Please try again.');
+      }
+      setIsExporting(false);
+    }
+  };
+
+  // OneNote formatted copy handling
+  const [isOneNoteCopied, setIsOneNoteCopied] = useState<boolean>(false);
+  const [oneNoteToast, setOneNoteToast] = useState<string | null>(null);
+
+  const handleCopyOneNote = async () => {
+    if (!markdown.trim()) return;
+    try {
+      const ok = await copyToOneNoteClipboard(markdown);
+      if (ok) {
+        setIsOneNoteCopied(true);
+        setOneNoteToast('Copied for OneNote! Paste (Ctrl+V) directly into OneNote.');
+        setTimeout(() => setIsOneNoteCopied(false), 2500);
+        setTimeout(() => setOneNoteToast(null), 4000);
+      } else {
+        setOneNoteToast('Could not copy to clipboard.');
+        setTimeout(() => setOneNoteToast(null), 3000);
+      }
+    } catch (err) {
+      console.error('OneNote copy error:', err);
+      setOneNoteToast('Could not copy to clipboard.');
+      setTimeout(() => setOneNoteToast(null), 3000);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+      {/* Top Header with OneNote Copy, Print, and PDF actions */}
+      <Header
+        onExportPdf={handleExportPdf}
+        isExporting={isExporting}
+        exportProgress={exportProgress}
+        onCopyOneNote={handleCopyOneNote}
+        isOneNoteCopied={isOneNoteCopied}
+        hasMarkdown={Boolean(markdown.trim())}
+      />
+
+      {/* Main Single-Page Workspace */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        {/* Layout Options Bar (Desktop bar & Mobile bottom drawer) */}
+        <PandocConfigBar
+          config={config}
+          onChange={handleConfigChange}
+          onResetToDefaults={handleResetToDefaults}
+          isOpenOnMobile={isMobileSettingsOpen}
+          onCloseMobile={() => setIsMobileSettingsOpen(false)}
+        />
+
+        {/* Cozy Mobile Top View Switcher & Settings */}
+        <div className="no-print md:hidden flex items-center justify-between px-3 py-1.5 bg-slate-100/90 dark:bg-slate-900/90 border-b border-slate-200/90 dark:border-slate-800/90 shrink-0 gap-2">
+          {/* Segmented Mode Switcher */}
+          <div className="flex items-center p-0.5 bg-slate-200/80 dark:bg-slate-800/80 rounded-xl text-xs">
+            <button
+              onClick={() => setMobileView('editor')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer ${
+                mobileView === 'editor'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>Editor</span>
+            </button>
+            <button
+              onClick={() => setMobileView('preview')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer ${
+                mobileView === 'preview'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Preview</span>
+            </button>
+          </div>
+
+          {/* Quick Document Settings Button */}
+          <button
+            onClick={() => setIsMobileSettingsOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 shadow-2xs cursor-pointer"
+            title="Document Settings"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5 text-blue-500" />
+            <span>Layout</span>
+          </button>
+        </div>
+
+        {/* Split Screen Workspace on Desktop / Full Screen on Mobile */}
+        <div
+          ref={containerRef}
+          className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden relative"
+        >
+          {/* Left: Markdown Editor */}
+          <div
+            style={isDesktop ? { width: `${splitRatio}%` } : undefined}
+            className={`h-full flex flex-col min-h-0 w-full ${
+              mobileView === 'editor' ? 'flex' : 'hidden md:flex'
+            }`}
+          >
+            <EditorPane
+              markdown={markdown}
+              onChange={setMarkdown}
+              onCopyOneNote={handleCopyOneNote}
+              isOneNoteCopied={isOneNoteCopied}
+              highlightRange={highlightRange}
+            />
+          </div>
+
+          {/* Draggable Vertical Divider Bar (Desktop only) */}
+          <div
+            onMouseDown={handleMouseDown}
+            className="no-print hidden md:flex items-center justify-center w-2 bg-slate-200 dark:bg-slate-800 hover:bg-blue-500 dark:hover:bg-blue-600 cursor-col-resize transition-colors select-none z-10 shrink-0 group"
+            title="Drag to resize editor and viewer width"
+          >
+            <div className="w-0.5 h-6 rounded-full bg-slate-400 dark:bg-slate-600 group-hover:bg-white transition-colors" />
+          </div>
+
+          {/* Right: Live LaTeX Document Preview */}
+          <div
+            style={isDesktop ? { width: `${100 - splitRatio}%` } : undefined}
+            className={`h-full flex flex-col min-h-0 w-full ${
+              mobileView === 'preview' ? 'flex' : 'hidden md:flex'
+            }`}
+          >
+            <PreviewPane
+              parsed={parsed}
+              config={config}
+              sheetRef={sheetRef}
+              onTextSelect={handleTextSelectedInPreview}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Prominent High-Fidelity Download Progress Modal & Error Handler */}
+      <DownloadProgressModal
+        isOpen={isExporting}
+        progress={exportProgress}
+        statusText={exportStatusText}
+        error={exportError}
+        onDismissError={() => setExportError(null)}
+      />
+
+      {/* OneNote Copy Notification Toast */}
+      {oneNoteToast && (
+        <div className="no-print fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-4 py-2.5 bg-slate-900/95 dark:bg-slate-100/95 text-white dark:text-slate-900 text-xs font-medium rounded-2xl shadow-2xl backdrop-blur-md border border-slate-700/60 dark:border-slate-300/60 pointer-events-none transition-all">
+          <Check className="w-4 h-4 text-emerald-400 dark:text-emerald-600 shrink-0" />
+          <span>{oneNoteToast}</span>
+        </div>
+      )}
+    </div>
+  );
+}
